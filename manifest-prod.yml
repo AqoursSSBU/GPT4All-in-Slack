@@ -1,6 +1,6 @@
 display_information:
-  name: ChatGPT
-  description: Interact with ChatGPT in Slack!
+  name: GPT
+  description: Interact with an AI in Slack!
   background_color: "#195208"
 features:
   app_home:
@@ -8,7 +8,7 @@ features:
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   bot_user:
-    display_name: ChatGPT Bot
+    display_name: GPT Bot
     always_online: true
 oauth_config:
   redirect_urls:
