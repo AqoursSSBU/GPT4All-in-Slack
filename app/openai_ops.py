@@ -129,7 +129,7 @@ def consume_openai_stream_to_write_reply(
                 print("broken")
                 break
             delta = item.get("message").get("content")
-            print(delta)
+            
             for message in messages:
                 delta=delta[len(message["content"])+1:]
             print("new text")
