@@ -1,7 +1,6 @@
 import logging
 import re
 import time
-import openai
 from openai.error import Timeout
 from slack_bolt import App, Ack, BoltContext, BoltResponse
 from slack_bolt.request.payload_utils import is_event
@@ -64,6 +63,7 @@ def respond_to_app_mention(
     # Replace placeholder for Slack user ID in the system prompt
     system_text = build_system_text(SYSTEM_TEXT, TRANSLATE_MARKDOWN, context)
     messages = [{"role": "system", "content": system_text}]
+
     openai_api_key = context.get("OPENAI_API_KEY")
     openai_api_base = context.get("OPENAI_API_BASE")
     try:
@@ -71,6 +71,7 @@ def respond_to_app_mention(
             client.chat_postMessage(
                 channel=context.channel_id,
                 text="To use this app, please configure your API base.",
+
             )
             return
 

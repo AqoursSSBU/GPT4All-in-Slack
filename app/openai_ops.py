@@ -15,6 +15,7 @@ from app.markdown import slack_to_markdown, markdown_to_slack
 from app.slack_ops import update_wip_message
 from app.utils import log
 
+
 # ----------------------------
 # Internal functions
 # ----------------------------
@@ -70,6 +71,7 @@ def messages_within_context_window(
     #         # Fall through and let the OpenAI error handler deal with it
     #         break
     return messages, 0, 0
+
 
 
 def start_receiving_openai_response(
