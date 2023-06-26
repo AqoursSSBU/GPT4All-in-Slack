@@ -132,8 +132,6 @@ def consume_openai_stream_to_write_reply(
             
             for message in messages:
                 delta=delta[len(message["content"])+1:]
-            print("new text")
-            print(delta)
             
             if delta is not None:
                 word_count += 1
