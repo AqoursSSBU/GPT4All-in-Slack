@@ -64,10 +64,15 @@ def respond_to_app_mention(
     # Replace placeholder for Slack user ID in the system prompt
     system_text = build_system_text(SYSTEM_TEXT, TRANSLATE_MARKDOWN, context)
     messages = [{"role": "system", "content": system_text}]
-
     openai_api_key = context.get("OPENAI_API_KEY")
+    openai_api_base = context.get("OPENAI_API_BASE")
     try:
-        
+        if openai_api_base is None:
+            client.chat_postMessage(
+                channel=context.channel_id,
+                text="To use this app, please configure your API base.",
+            )
+            return
 
         user_id = context.actor_user_id or context.user_id
 
