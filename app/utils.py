@@ -30,3 +30,9 @@ def redact_string(input_string: str) -> str:
         output_string = re.sub(REDACT_USER_DEFINED_PATTERN, "[REDACTED]", output_string)
 
     return output_string
+
+def log(ts: str, text: str):
+    print("logging")
+    print(ts)
+    print(text)
+    return

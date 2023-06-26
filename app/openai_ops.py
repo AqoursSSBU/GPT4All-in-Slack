@@ -13,6 +13,7 @@ from slack_sdk.web import WebClient
 
 from app.markdown import slack_to_markdown, markdown_to_slack
 from app.slack_ops import update_wip_message
+from app.utils import log
 
 # ----------------------------
 # Internal functions
@@ -144,6 +145,7 @@ def consume_openai_stream_to_write_reply(
                             messages=messages,
                             user=user_id,
                         )
+                        log(ts=wip_reply["message"]["ts"],text=assistant_reply_text + loading_character)
 
                     thread = threading.Thread(target=update_message)
                     thread.daemon = True
