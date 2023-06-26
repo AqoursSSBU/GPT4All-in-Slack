@@ -55,20 +55,20 @@ def messages_within_context_window(
     # Remove old messages to make sure we have room for max_tokens
     # See also: https://platform.openai.com/docs/guides/chat/introduction
     # > total tokens must be below the model’s maximum limit (e.g., 4096 tokens for gpt-3.5-turbo-0301)
-    max_context_tokens = context_length(model) - MAX_TOKENS - 1
-    num_context_tokens = 0  # Number of tokens in the context window just before the earliest message is deleted
-    while (num_tokens := calculate_num_tokens(messages)) > max_context_tokens:
-        removed = False
-        for i, message in enumerate(messages):
-            if message["role"] in ("user", "assistant"):
-                num_context_tokens = num_tokens
-                del messages[i]
-                removed = True
-                break
-        if not removed:
-            # Fall through and let the OpenAI error handler deal with it
-            break
-    return messages, num_context_tokens, max_context_tokens
+    # max_context_tokens = context_length(model) - MAX_TOKENS - 1
+    # num_context_tokens = 0  # Number of tokens in the context window just before the earliest message is deleted
+    # while (num_tokens := calculate_num_tokens(messages)) > max_context_tokens:
+    #     removed = False
+    #     for i, message in enumerate(messages):
+    #         if message["role"] in ("user", "assistant"):
+    #             num_context_tokens = num_tokens
+    #             del messages[i]
+    #             removed = True
+    #             break
+    #     if not removed:
+    #         # Fall through and let the OpenAI error handler deal with it
+    #         break
+    return messages, 0, 0
 
 
 def start_receiving_openai_response(
@@ -83,23 +83,17 @@ def start_receiving_openai_response(
     openai_api_version: str,
     openai_deployment_id: str,
 ) -> Generator[OpenAIObject, Any, None]:
+    openai.api_base = "https://d2bc-115-78-135-110.ap.ngrok.io/v1"
     return openai.ChatCompletion.create(
         api_key=openai_api_key,
-        model=model,
+        model="vicuna-7b-1.1-q4_2",
         messages=messages,
         top_p=1,
         n=1,
-        max_tokens=MAX_TOKENS,
-        temperature=temperature,
-        presence_penalty=0,
-        frequency_penalty=0,
-        logit_bias={},
-        user=user,
-        stream=True,
-        api_type=openai_api_type,
-        api_base=openai_api_base,
-        api_version=openai_api_version,
-        deployment_id=openai_deployment_id,
+        max_tokens=MAX_TOKENS,  
+        temperature=0.28,
+        echo=True,
+        stream=False
     )
 
 
@@ -117,21 +111,34 @@ def consume_openai_stream_to_write_reply(
     start_time = time.time()
     assistant_reply: Dict[str, str] = {"role": "assistant", "content": ""}
     messages.append(assistant_reply)
+    print("old text")
+    print(messages)
     word_count = 0
     threads = []
     try:
         loading_character = " ... :writing_hand:"
-        for chunk in stream:
+        for item in stream["choices"]:
             spent_seconds = time.time() - start_time
             if timeout_seconds < spent_seconds:
                 raise Timeout()
-            item = chunk.choices[0]
-            if item.get("finish_reason") is not None:
+            print("hi")
+            print(stream)
+            print("item")
+            print(item)
+            if item.get("finish_reason") != "stop":
+                print("broken")
                 break
-            delta = item.get("delta")
-            if delta.get("content") is not None:
+            delta = item.get("message").get("content")
+            print(delta)
+            for message in messages:
+                delta=delta[len(message["content"])+1:]
+            print("new text")
+            print(delta)
+            
+            if delta is not None:
                 word_count += 1
-                assistant_reply["content"] += delta.get("content")
+                assistant_reply["content"] += delta
+                print(assistant_reply)
                 if word_count >= 20:
 
                     def update_message():
@@ -160,11 +167,15 @@ def consume_openai_stream_to_write_reply(
                     t.join()
             except Exception:
                 pass
-
+        print("here is a dictionary")
+        print(assistant_reply)    
         assistant_reply_text = format_assistant_reply(
             assistant_reply["content"], translate_markdown
         )
         wip_reply["message"]["text"] = assistant_reply_text
+        print("here is a dictionary")
+        print(wip_reply)
+        print("this is the text: "+ assistant_reply_text)
         update_wip_message(
             client=client,
             channel=context.channel_id,

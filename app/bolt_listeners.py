@@ -1,7 +1,7 @@
 import logging
 import re
 import time
-
+import openai
 from openai.error import Timeout
 from slack_bolt import App, Ack, BoltContext, BoltResponse
 from slack_bolt.request.payload_utils import is_event
@@ -131,6 +131,7 @@ def respond_to_app_mention(
             max_context_tokens,
         ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
         num_messages = len([msg for msg in messages if msg.get("role") != "system"])
+        print(messages)
         if num_messages == 0:
             update_wip_message(
                 client=client,
@@ -152,6 +153,7 @@ def respond_to_app_mention(
                 openai_api_version=context["OPENAI_API_VERSION"],
                 openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
             )
+            print(stream)
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,

@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     @app.middleware
     def set_openai_api_key(context: BoltContext, next_):
-        context["OPENAI_API_KEY"] = os.environ["OPENAI_API_KEY"]
+        context["OPENAI_API_KEY"] = "doesn't matter"
         context["OPENAI_MODEL"] = OPENAI_MODEL
         context["OPENAI_TEMPERATURE"] = OPENAI_TEMPERATURE
         context["OPENAI_API_TYPE"] = OPENAI_API_TYPE
