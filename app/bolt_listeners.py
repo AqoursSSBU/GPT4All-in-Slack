@@ -67,12 +67,7 @@ def respond_to_app_mention(
 
     openai_api_key = context.get("OPENAI_API_KEY")
     try:
-        if openai_api_key is None:
-            client.chat_postMessage(
-                channel=context.channel_id,
-                text="To use this app, please configure your OpenAI API key first",
-            )
-            return
+        
 
         user_id = context.actor_user_id or context.user_id
 
@@ -131,7 +126,6 @@ def respond_to_app_mention(
             max_context_tokens,
         ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
         num_messages = len([msg for msg in messages if msg.get("role") != "system"])
-        print(messages)
         if num_messages == 0:
             update_wip_message(
                 client=client,
@@ -153,7 +147,6 @@ def respond_to_app_mention(
                 openai_api_version=context["OPENAI_API_VERSION"],
                 openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
             )
-            print(stream)
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,

@@ -83,15 +83,15 @@ def start_receiving_openai_response(
     openai_api_version: str,
     openai_deployment_id: str,
 ) -> Generator[OpenAIObject, Any, None]:
-    openai.api_base = "https://d2bc-115-78-135-110.ap.ngrok.io/v1"
+    openai.api_base = openai_api_base
     return openai.ChatCompletion.create(
         api_key=openai_api_key,
-        model="vicuna-7b-1.1-q4_2",
+        model=model,
         messages=messages,
         top_p=1,
         n=1,
         max_tokens=MAX_TOKENS,  
-        temperature=0.28,
+        temperature=temperature,
         echo=True,
         stream=False
     )
@@ -111,8 +111,6 @@ def consume_openai_stream_to_write_reply(
     start_time = time.time()
     assistant_reply: Dict[str, str] = {"role": "assistant", "content": ""}
     messages.append(assistant_reply)
-    print("old text")
-    print(messages)
     word_count = 0
     threads = []
     try:
@@ -121,24 +119,18 @@ def consume_openai_stream_to_write_reply(
             spent_seconds = time.time() - start_time
             if timeout_seconds < spent_seconds:
                 raise Timeout()
-            print("hi")
-            print(stream)
-            print("item")
-            print(item)
+            
             if item.get("finish_reason") != "stop":
-                print("broken")
                 break
             delta = item.get("message").get("content")
-            
             for message in messages:
-                delta=delta[len(message["content"])+1:]
-            
+                if len(message["content"])>0:
+                    delta=delta[len(message["content"])+1:]
+                delta=delta.lstrip('\n')
             if delta is not None:
                 word_count += 1
                 assistant_reply["content"] += delta
-                print(assistant_reply)
                 if word_count >= 20:
-
                     def update_message():
                         assistant_reply_text = format_assistant_reply(
                             assistant_reply["content"], translate_markdown
@@ -164,16 +156,11 @@ def consume_openai_stream_to_write_reply(
                 if t.is_alive():
                     t.join()
             except Exception:
-                pass
-        print("here is a dictionary")
-        print(assistant_reply)    
+                pass   
         assistant_reply_text = format_assistant_reply(
             assistant_reply["content"], translate_markdown
         )
         wip_reply["message"]["text"] = assistant_reply_text
-        print("here is a dictionary")
-        print(wip_reply)
-        print("this is the text: "+ assistant_reply_text)
         update_wip_message(
             client=client,
             channel=context.channel_id,

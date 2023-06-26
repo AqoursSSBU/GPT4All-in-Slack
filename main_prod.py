@@ -151,14 +151,12 @@ def handler(event, context_):
             config_str: str = s3_response["Body"].read().decode("utf-8")
             if config_str.startswith("{"):
                 config = json.loads(config_str)
-                context["OPENAI_API_KEY"] = config.get("api_key")
                 context["OPENAI_MODEL"] = config.get("model")
                 context["OPENAI_TEMPERATURE"] = config.get(
                     "temperature", DEFAULT_OPENAI_TEMPERATURE
                 )
             else:
                 # The legacy data format
-                context["OPENAI_API_KEY"] = config_str
                 context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
                 context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
             context["OPENAI_API_TYPE"] = DEFAULT_OPENAI_API_TYPE
@@ -180,15 +178,14 @@ def handler(event, context_):
             pass
 
         openai_api_key = context.get("OPENAI_API_KEY")
-        if openai_api_key is not None:
-            message = translate(
-                openai_api_key=openai_api_key, context=context, text=message
-            )
-            configure_label = translate(
-                openai_api_key=openai_api_key,
-                context=context,
-                text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
-            )
+        message = translate(
+            openai_api_key=openai_api_key, context=context, text=message
+        )
+        configure_label = translate(
+            openai_api_key=openai_api_key,
+            context=context,
+            text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
+        )
 
         client.views_publish(
             user_id=context.user_id,
