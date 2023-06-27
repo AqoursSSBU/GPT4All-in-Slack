@@ -110,6 +110,7 @@ def consume_openai_stream_to_write_reply(
     stream: Generator[OpenAIObject, Any, None],
     timeout_seconds: int,
     translate_markdown: bool,
+    ts: str,
 ):
     start_time = time.time()
     assistant_reply: Dict[str, str] = {"role": "assistant", "content": ""}
@@ -173,8 +174,8 @@ def consume_openai_stream_to_write_reply(
             messages=messages,
             user=user_id,
         )
-        log(ts=context.channel_id,text=messages[len(messages)-2]["content"])
-        log(ts=context.channel_id,text=messages[len(messages)-1]["content"])
+        log(ts=ts,text=messages[len(messages)-2]["content"])
+        log(ts=ts,text=messages[len(messages)-1]["content"])
     finally:
         for t in threads:
             try:

@@ -1,0 +1,4 @@
+<@U05E1KURDCZ>: hi
+
+Hello! I am a bot and can answer questions related to [gapminder data](https://d396qus696.cloudfront.net/histogram_2017/Countries%20on%20our%20map%20where%20income%20is%20higher%20than%20median%20of%3A%20North%20Korea%2C%20Nepal%2C%20Liberia%20(2017)%E2%80%9340.png). Please note that I am not aware of recent developments and my knowledge cut off is 2021-03.
+

@@ -5,7 +5,7 @@ from openai.error import Timeout
 from slack_bolt import App, Ack, BoltContext, BoltResponse
 from slack_bolt.request.payload_utils import is_event
 from slack_sdk.web import WebClient
-from app.utils import log
+from app.utils import log, feedback
 
 from app.env import (
     OPENAI_TIMEOUT_SECONDS,
@@ -163,6 +163,7 @@ def respond_to_app_mention(
                 stream=stream,
                 timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
+                ts=payload["ts"],
             )
 
     except Timeout:
@@ -398,6 +399,7 @@ def respond_to_new_message(
                 stream=stream,
                 timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
+                ts=thread_ts
             )
 
     except Timeout:
@@ -439,10 +441,65 @@ def respond_to_new_message(
             )
 
 
+def react_feedback(  
+    context: BoltContext,
+    payload: dict,
+    client: WebClient,
+    logger: logging.Logger,
+    ):
+    result = client.conversations_replies(
+        channel=payload.get("item").get("channel"),
+        inclusive=True,
+        ts=payload.get("item").get("ts")
+    )
+    if(client.auth_test().get("user_id")==payload.get("item_user") and DEFAULT_LOADING_TEXT!=message["text"]):
+        if(payload.get("item").get("channel")[0]=="D"):
+            # In DMs
+            final = client.conversations_history(
+                channel=payload.get("item").get("channel"),
+                inclusive=True,
+                latest=payload.get("item").get("ts"),
+                limit=2
+            )
+            feedback(
+                ts=final["messages"][-1]["ts"],
+                prompt=final["messages"][-1]["text"],
+                response=final["messages"][-2]["text"],
+                mood=payload.get("reaction")
+            )
+        else:
+            # In thread
+            parent_ts=result["messages"][0]["thread_ts"]
+            parent = client.conversations_history(
+                channel=payload.get("item").get("channel"),
+                inclusive=True,
+                latest=parent_ts,
+                limit=1
+            )
+            print(parent)
+            final = client.conversations_replies(
+                channel=payload.get("item").get("channel"),
+                inclusive=True,
+                ts=parent["messages"][0]["thread_ts"],
+                latest=payload.get("item").get("ts"),
+                limit=2
+            )
+            print("final")
+            print(final)
+            feedback(
+                ts=final["messages"][-2]["ts"],
+                prompt=final["messages"][-2]["text"],
+                response=final["messages"][-1]["text"],
+                mood=payload.get("reaction")
+            )
+       
+    
+
 def register_listeners(app: App):
     app.event("app_mention")(ack=just_ack, lazy=[respond_to_app_mention])
     app.event("message")(ack=just_ack, lazy=[respond_to_new_message])
-
+    app.event("reaction_added")(ack=just_ack, lazy=[react_feedback])
+    
 
 MESSAGE_SUBTYPES_TO_SKIP = ["message_changed", "message_deleted"]
 

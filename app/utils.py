@@ -44,3 +44,24 @@ def log(ts: str, text: str):
     file.write("\n")
     file.close()
     return
+
+def feedback(ts: str, prompt: str, response: str, mood: str):
+    path=""
+    match(mood):
+        case "+1":
+            path="./feedback/good"
+        case "-1":
+            path="./feedback/bad"
+        case "warning":
+            path="./feedback/error"
+        case _:
+            return
+    if(not os.path.exists(path)):
+        os.makedirs(path)
+    file = open(path+f"/{ts}.txt",'x')
+    file.write(prompt)
+    file.write("\n")
+    file.write("\n")
+    file.write(response)
+    file.close()
+    return
