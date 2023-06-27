@@ -1,0 +1,5 @@
+how do i cook spaghetti
+
+:hourglass_flowing_sand: Wait a second, please ...
+
+:warning: Failed to reply: consume_openai_stream_to_write_reply() missing 1 required keyword-only argument: 'ts'
