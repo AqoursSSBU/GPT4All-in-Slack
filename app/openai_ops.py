@@ -147,7 +147,7 @@ def consume_openai_stream_to_write_reply(
                             messages=messages,
                             user=user_id,
                         )
-                        log(ts=wip_reply["message"]["ts"],text=assistant_reply_text + loading_character)
+                        
 
                     thread = threading.Thread(target=update_message)
                     thread.daemon = True
@@ -173,6 +173,10 @@ def consume_openai_stream_to_write_reply(
             messages=messages,
             user=user_id,
         )
+        print("log here")
+        print(messages)
+        log(ts=context.channel_id,text=messages[len(messages)-2]["content"])
+        log(ts=context.channel_id,text=messages[len(messages)-1]["content"])
     finally:
         for t in threads:
             try:

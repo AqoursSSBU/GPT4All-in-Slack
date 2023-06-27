@@ -1,4 +1,5 @@
 import re
+import os
 from app.env import (
     REDACT_EMAIL_PATTERN,
     REDACT_PHONE_PATTERN,
@@ -35,4 +36,14 @@ def log(ts: str, text: str):
     print("logging")
     print(ts)
     print(text)
+    if(not os.path.exists("./logs")):
+        os.makedirs("./logs")
+    try:
+        file = open(f"./logs/{ts}.txt",'x')
+    except:
+        file = open(f"./logs/{ts}.txt",'a')
+    file.write(text)
+    file.write("\n")
+    file.write("\n")
+    file.close()
     return
