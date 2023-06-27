@@ -5,6 +5,7 @@ from openai.error import Timeout
 from slack_bolt import App, Ack, BoltContext, BoltResponse
 from slack_bolt.request.payload_utils import is_event
 from slack_sdk.web import WebClient
+from app.utils import log
 
 from app.env import (
     OPENAI_TIMEOUT_SECONDS,
@@ -113,7 +114,7 @@ def respond_to_app_mention(
                     + format_openai_message_content(msg_text, TRANSLATE_MARKDOWN),
                 }
             )
-
+        
         loading_text = translate(
             openai_api_key=openai_api_key, context=context, text=DEFAULT_LOADING_TEXT
         )
