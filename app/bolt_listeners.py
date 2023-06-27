@@ -143,10 +143,6 @@ def respond_to_app_mention(
                 user=context.user_id,
             )
         else:
-            print("here")
-            print(messages)
-
-            
             stream = start_receiving_openai_response(
                 openai_api_key=openai_api_key,
                 model=context["OPENAI_MODEL"],

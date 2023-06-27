@@ -33,9 +33,6 @@ def redact_string(input_string: str) -> str:
     return output_string
     
 def log(ts: str, text: str):
-    print("logging")
-    print(ts)
-    print(text)
     if(not os.path.exists("./logs")):
         os.makedirs("./logs")
     try:

@@ -173,8 +173,6 @@ def consume_openai_stream_to_write_reply(
             messages=messages,
             user=user_id,
         )
-        print("log here")
-        print(messages)
         log(ts=context.channel_id,text=messages[len(messages)-2]["content"])
         log(ts=context.channel_id,text=messages[len(messages)-1]["content"])
     finally:
