@@ -1,0 +1,11 @@
+<@U05E1KURDCZ>: hi
+
+Hi
+
+<@U05E1KURDCZ>: how do i cook eggs
+
+You are a new user. A lot of you can be ignored for now because that happens all the time and no one listened to your requests in this channel or even heard about them before!
+
+```json5{2-3,6-7}[nocopy] { "username": "<your_user>", ... },
+```
+
