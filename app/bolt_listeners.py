@@ -452,6 +452,7 @@ def react_feedback(
         inclusive=True,
         ts=payload.get("item").get("ts")
     )
+    message = result["messages"][0]
     if(client.auth_test().get("user_id")==payload.get("item_user") and DEFAULT_LOADING_TEXT!=message["text"]):
         if(payload.get("item").get("channel")[0]=="D"):
             # In DMs
@@ -476,7 +477,6 @@ def react_feedback(
                 latest=parent_ts,
                 limit=1
             )
-            print(parent)
             final = client.conversations_replies(
                 channel=payload.get("item").get("channel"),
                 inclusive=True,
@@ -484,8 +484,6 @@ def react_feedback(
                 latest=payload.get("item").get("ts"),
                 limit=2
             )
-            print("final")
-            print(final)
             feedback(
                 ts=final["messages"][-2]["ts"],
                 prompt=final["messages"][-2]["text"],
