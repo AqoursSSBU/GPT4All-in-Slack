@@ -8,7 +8,7 @@ from app.env import (
     REDACT_USER_DEFINED_PATTERN,
     REDACTION_ENABLED,
 )
-
+import mysql.connector
 
 def redact_string(input_string: str) -> str:
     """
@@ -32,36 +32,76 @@ def redact_string(input_string: str) -> str:
 
     return output_string
     
-def log(ts: str, text: str):
-    if(not os.path.exists("./logs")):
-        os.makedirs("./logs")
-    try:
-        file = open(f"./logs/{ts}.txt",'x')
-    except:
-        file = open(f"./logs/{ts}.txt",'a')
-    file.write(text)
-    file.write("\n")
-    file.write("\n")
-    file.close()
+def log(ts: str, prompt: str, response: str):
+    # if(not os.path.exists("./logs")):
+    #     os.makedirs("./logs")
+    # try:
+    #     file = open(f"./logs/{ts}.txt",'x')
+    # except:
+    #     file = open(f"./logs/{ts}.txt",'a')
+    # file.write(text)
+    # file.write("\n")
+    # file.write("\n")
+    # file.close()
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="password",
+        database="mydatabase"
+    )
+    cursor=db.cursor()
+    sql = "CREATE TABLE IF NOT EXISTS GPTlog (ts VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY, prompt TEXT NOT NULL, response TEXT NOT NULL, upvote int NOT NULL, downvote int NOT NULL, error int NOT NULL)"
+    cursor.execute(sql)
+    sql = "INSERT INTO GPTlog (ts, prompt, response, upvote, downvote, error) VALUES (%s, %s, %s, %s, %s, %s)"
+    val = (ts,prompt,response,0,0,0)
+    cursor.execute(sql, val)
+    db.commit()
+    db.disconnect()
     return
 
-def feedback(ts: str, prompt: str, response: str, mood: str):
-    path=""
+def feedback(ts: str, mood: str):
+    # path=""
+    # match(mood):
+    #     case "+1":
+    #         path="./feedback/good"
+    #     case "-1":
+    #         path="./feedback/bad"
+    #     case "warning":
+    #         path="./feedback/error"
+    #     case _:
+    #         return
+    # if(not os.path.exists(path)):
+    #     os.makedirs(path)
+    # file = open(path+f"/{ts}.txt",'x')
+    # file.write(prompt)
+    # file.write("\n")
+    # file.write("\n")
+    # file.write(response)
+    # file.close()
+
+    db = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="password",
+        database="mydatabase"
+    )
+    cursor=db.cursor()
+    # ID to match
+    ts_to_match = ts
+    # Execute the SQL query
+    query = "SELECT * FROM GPTlog WHERE ts = %s"
+    cursor.execute(query, (ts_to_match,))
+    result = cursor.fetchall()
     match(mood):
         case "+1":
-            path="./feedback/good"
+            values=(str(int(result[0][4])+1),str(result[0][1]))
         case "-1":
-            path="./feedback/bad"
+            values=(str(int(result[0][5])+1),str(result[0][1]))
         case "warning":
-            path="./feedback/error"
+            values=(str(int(result[0][6])+1),str(result[0][1]))
         case _:
             return
-    if(not os.path.exists(path)):
-        os.makedirs(path)
-    file = open(path+f"/{ts}.txt",'x')
-    file.write(prompt)
-    file.write("\n")
-    file.write("\n")
-    file.write(response)
-    file.close()
+    cursor.execute("UPDATE GPTlog SET upvote = %s WHERE ts = %s",values)
+    db.commit()
+    db.disconnect()
     return
