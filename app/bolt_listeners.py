@@ -154,6 +154,8 @@ def respond_to_app_mention(
                 openai_api_version=context["OPENAI_API_VERSION"],
                 openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
             )
+            print("payload")
+            print(payload)
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,
@@ -389,7 +391,8 @@ def respond_to_new_message(
                     ts=wip_reply["message"]["ts"],
                 )
                 return
-
+            print("payload")
+            print(payload)
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,
@@ -464,8 +467,6 @@ def react_feedback(
             )
             feedback(
                 ts=final["messages"][-1]["ts"],
-                prompt=final["messages"][-1]["text"],
-                response=final["messages"][-2]["text"],
                 mood=payload.get("reaction")
             )
         else:
@@ -486,8 +487,6 @@ def react_feedback(
             )
             feedback(
                 ts=final["messages"][-2]["ts"],
-                prompt=final["messages"][-2]["text"],
-                response=final["messages"][-1]["text"],
                 mood=payload.get("reaction")
             )
        
