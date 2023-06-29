@@ -154,6 +154,8 @@ def respond_to_app_mention(
                 openai_api_version=context["OPENAI_API_VERSION"],
                 openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
             )
+            print("payload")
+            print(payload)
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,
@@ -163,9 +165,9 @@ def respond_to_app_mention(
                 stream=stream,
                 timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
-                ts=payload["ts"],
             )
-
+            prompt=messages[len(messages)-2]["content"]
+            response=messages[len(messages)-1]["content"]
     except Timeout:
         if wip_reply is not None:
             text = (
@@ -186,6 +188,8 @@ def respond_to_app_mention(
                 ts=wip_reply["message"]["ts"],
                 text=text,
             )
+            prompt=messages[len(messages)-1]["content"]
+            response=text
     except Exception as e:
         text = (
             (
@@ -197,7 +201,7 @@ def respond_to_app_mention(
             + translate(
                 openai_api_key=openai_api_key,
                 context=context,
-                text=f":warning: Failed to start a conversation with ChatGPT: {e}",
+                text=f":warning: An error occurred: {e}",
             )
         )
         logger.exception(text, e)
@@ -207,7 +211,11 @@ def respond_to_app_mention(
                 ts=wip_reply["message"]["ts"],
                 text=text,
             )
-
+        prompt=messages[len(messages)-1]["content"]
+        response=text
+    print("look here:")
+    print(messages)
+    log(ts=payload["ts"],thread=payload["ts"],prompt=prompt,response=response)
 
 def respond_to_new_message(
     context: BoltContext,
@@ -389,7 +397,8 @@ def respond_to_new_message(
                     ts=wip_reply["message"]["ts"],
                 )
                 return
-
+            print("payload")
+            print(payload)
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,
@@ -399,9 +408,9 @@ def respond_to_new_message(
                 stream=stream,
                 timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
-                ts=thread_ts
             )
-
+            prompt=messages[len(messages)-2]["content"]
+            response=messages[len(messages)-1]["content"]
     except Timeout:
         if wip_reply is not None:
             text = (
@@ -422,6 +431,8 @@ def respond_to_new_message(
                 ts=wip_reply["message"]["ts"],
                 text=text,
             )
+            prompt=messages[len(messages)-1]["content"]
+            response=text
     except Exception as e:
         text = (
             (
@@ -439,6 +450,13 @@ def respond_to_new_message(
                 ts=wip_reply["message"]["ts"],
                 text=text,
             )
+        prompt=messages[len(messages)-1]["content"]
+        response=text
+    if(thread_ts is not None):
+        realThread=thread_ts
+    else:
+        realThread=context.channel_id
+    log(ts=payload["ts"],thread=realThread,prompt=prompt,response=response)
 
 
 def react_feedback(  
@@ -464,8 +482,6 @@ def react_feedback(
             )
             feedback(
                 ts=final["messages"][-1]["ts"],
-                prompt=final["messages"][-1]["text"],
-                response=final["messages"][-2]["text"],
                 mood=payload.get("reaction")
             )
         else:
@@ -486,8 +502,6 @@ def react_feedback(
             )
             feedback(
                 ts=final["messages"][-2]["ts"],
-                prompt=final["messages"][-2]["text"],
-                response=final["messages"][-1]["text"],
                 mood=payload.get("reaction")
             )
        

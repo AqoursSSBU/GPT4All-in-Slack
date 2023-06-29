@@ -110,7 +110,6 @@ def consume_openai_stream_to_write_reply(
     stream: Generator[OpenAIObject, Any, None],
     timeout_seconds: int,
     translate_markdown: bool,
-    ts: str,
 ):
     start_time = time.time()
     assistant_reply: Dict[str, str] = {"role": "assistant", "content": ""}
@@ -127,6 +126,7 @@ def consume_openai_stream_to_write_reply(
             if item.get("finish_reason") != "stop":
                 break
             delta = item.get("message").get("content")
+            
             for message in messages:
                 if len(message["content"])>0:
                     delta=delta[len(message["content"])+1:]
@@ -174,8 +174,8 @@ def consume_openai_stream_to_write_reply(
             messages=messages,
             user=user_id,
         )
-        log(ts=ts,text=messages[len(messages)-2]["content"])
-        log(ts=ts,text=messages[len(messages)-1]["content"])
+        print("here")
+        print(stream)
     finally:
         for t in threads:
             try:
@@ -187,6 +187,7 @@ def consume_openai_stream_to_write_reply(
             stream.close()
         except Exception:
             pass
+        
 
 
 def context_length(
