@@ -32,7 +32,7 @@ def redact_string(input_string: str) -> str:
 
     return output_string
     
-def log(ts: str, prompt: str, response: str):
+def log(ts: str, prompt: str, response: str, thread: str):
     # if(not os.path.exists("./logs")):
     #     os.makedirs("./logs")
     # try:
@@ -43,17 +43,29 @@ def log(ts: str, prompt: str, response: str):
     # file.write("\n")
     # file.write("\n")
     # file.close()
+    mydb = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="password",
+        database="gptdb"
+    )
+
+    cursor = mydb.cursor()
+
+    cursor.execute("CREATE DATABASE IF NOT EXISTS gptdb")
+
+#mycursor.execute("CREATE DATABASE gptdb")
     db = mysql.connector.connect(
         host="localhost",
         user="root",
         password="password",
-        database="mydatabase"
+        database="gptdb"
     )
     cursor=db.cursor()
-    sql = "CREATE TABLE IF NOT EXISTS GPTlog (ts VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY, prompt TEXT NOT NULL, response TEXT NOT NULL, upvote int NOT NULL, downvote int NOT NULL, error int NOT NULL)"
+    sql = "CREATE TABLE IF NOT EXISTS GPTlog (ts VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY, thread VARCHAR(255) NOT NULL, prompt TEXT NOT NULL, response TEXT NOT NULL, upvote int NOT NULL, downvote int NOT NULL, error int NOT NULL)"
     cursor.execute(sql)
-    sql = "INSERT INTO GPTlog (ts, prompt, response, upvote, downvote, error) VALUES (%s, %s, %s, %s, %s, %s)"
-    val = (ts,prompt,response,0,0,0)
+    sql = "INSERT INTO GPTlog (ts, thread, prompt, response, upvote, downvote, error) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+    val = (ts,thread,prompt,response,0,0,0)
     cursor.execute(sql, val)
     db.commit()
     db.disconnect()
@@ -83,7 +95,7 @@ def feedback(ts: str, mood: str):
         host="localhost",
         user="root",
         password="password",
-        database="mydatabase"
+        database="gptdb"
     )
     cursor=db.cursor()
     # ID to match
@@ -94,14 +106,22 @@ def feedback(ts: str, mood: str):
     result = cursor.fetchall()
     match(mood):
         case "+1":
-            values=(str(int(result[0][4])+1),str(result[0][1]))
+            values=(str(int(result[0][4])+1),str(result[0][0]))
+            cursor.execute("UPDATE GPTlog SET upvote = %s WHERE ts = %s",values)
         case "-1":
-            values=(str(int(result[0][5])+1),str(result[0][1]))
+            values=(str(int(result[0][5])+1),str(result[0][0]))
+            cursor.execute("UPDATE GPTlog SET downvote = %s WHERE ts = %s",values)
         case "warning":
-            values=(str(int(result[0][6])+1),str(result[0][1]))
+            values=(str(int(result[0][6])+1),str(result[0][0]))
+            cursor.execute("UPDATE GPTlog SET error = %s WHERE ts = %s",values)
         case _:
             return
-    cursor.execute("UPDATE GPTlog SET upvote = %s WHERE ts = %s",values)
+    
     db.commit()
+    query = "SELECT * FROM GPTlog WHERE ts = %s"
+    cursor.execute(query, (ts_to_match,))
+    result = cursor.fetchall()
+    print(result)
+    print(values)
     db.disconnect()
     return
