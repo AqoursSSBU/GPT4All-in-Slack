@@ -32,7 +32,7 @@ def redact_string(input_string: str) -> str:
 
     return output_string
     
-def log(ts: str, prompt: str, response: str, thread: str):
+def log(ts: str, prompt: str, response: str, thread: str, user: str):
     # if(not os.path.exists("./logs")):
     #     os.makedirs("./logs")
     # try:
@@ -62,10 +62,10 @@ def log(ts: str, prompt: str, response: str, thread: str):
         database="gptdb"
     )
     cursor=db.cursor()
-    sql = "CREATE TABLE IF NOT EXISTS GPTlog (ts VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY, thread VARCHAR(255) NOT NULL, prompt TEXT NOT NULL, response TEXT NOT NULL, upvote int NOT NULL, downvote int NOT NULL, error int NOT NULL)"
+    sql = "CREATE TABLE IF NOT EXISTS GPTlog (ts VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY, thread VARCHAR(255) NOT NULL, user VARCHAR(255) NOT NULL, prompt TEXT NOT NULL, response TEXT NOT NULL, upvote int NOT NULL, downvote int NOT NULL, error int NOT NULL)"
     cursor.execute(sql)
-    sql = "INSERT INTO GPTlog (ts, thread, prompt, response, upvote, downvote, error) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-    val = (ts,thread,prompt,response,0,0,0)
+    sql = "INSERT INTO GPTlog (ts, thread, user, prompt, response, upvote, downvote, error) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    val = (ts,thread,user,prompt,response,0,0,0)
     cursor.execute(sql, val)
     db.commit()
     db.disconnect()

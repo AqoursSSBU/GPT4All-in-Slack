@@ -208,7 +208,9 @@ def respond_to_app_mention(
         prompt=messages[len(messages)-1]["content"]
         response=text
     incr+=1
-    log(ts=payload["ts"],thread=payload["ts"],prompt=prompt,response=response)
+    print("payload")
+    print(payload)
+    log(ts=payload["ts"],thread=payload["ts"],user=payload["user"],prompt=prompt,response=response)
 
 def respond_to_new_message(
     context: BoltContext,
@@ -450,7 +452,9 @@ def respond_to_new_message(
     else:
         realThread=context.channel_id
     incr+=1
-    log(ts=payload["ts"],thread=realThread,prompt=prompt,response=response)
+    print("payload")
+    print(payload)
+    log(ts=payload["ts"],thread=realThread,user=payload["user"],prompt=prompt,response=response)
 
 
 def react_feedback(  
