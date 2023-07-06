@@ -15,7 +15,7 @@ OPENAI_TIMEOUT_SECONDS = int(
 )
 
 
-DEFAULT_OPENAI_MODEL = "vicuna-13b-1.1-q4_2"
+DEFAULT_OPENAI_MODEL = "ggml-vicuna-7b-1.1-q4_2.bin"
 
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL)
 

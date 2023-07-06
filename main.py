@@ -26,7 +26,7 @@ from app.i18n import translate
 if __name__ == "__main__":
     
     from slack_bolt.adapter.socket_mode import SocketModeHandler
-
+    
     logging.basicConfig(level=SLACK_APP_LOG_LEVEL)
 
     app = App(
