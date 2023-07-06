@@ -25,7 +25,6 @@ from app.env import (
     DEFAULT_OPENAI_MODEL,
     DEFAULT_OPENAI_TEMPERATURE,
     DEFAULT_OPENAI_API_TYPE,
-    DEFAULT_OPENAI_API_BASE,
     DEFAULT_OPENAI_API_VERSION,
     DEFAULT_OPENAI_DEPLOYMENT_ID,
 )
@@ -142,30 +141,29 @@ def handler(event, context_):
                     pass
             next_()
 
-    @app.middleware
-    def set_s3_openai_api_key(context: BoltContext, next_):
-        try:
-            s3_response = s3_client.get_object(
-                Bucket=openai_bucket_name, Key=context.team_id
-            )
-            config_str: str = s3_response["Body"].read().decode("utf-8")
-            if config_str.startswith("{"):
-                config = json.loads(config_str)
-                context["OPENAI_MODEL"] = config.get("model")
-                context["OPENAI_TEMPERATURE"] = config.get(
-                    "temperature", DEFAULT_OPENAI_TEMPERATURE
-                )
-            else:
-                # The legacy data format
-                context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
-                context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
-            context["OPENAI_API_TYPE"] = DEFAULT_OPENAI_API_TYPE
-            context["OPENAI_API_BASE"] = DEFAULT_OPENAI_API_BASE
-            context["OPENAI_API_VERSION"] = DEFAULT_OPENAI_API_VERSION
-            context["OPENAI_DEPLOYMENT_ID"] = DEFAULT_OPENAI_DEPLOYMENT_ID
-        except:  # noqa: E722
-            context["OPENAI_API_KEY"] = None
-        next_()
+    # @app.middleware
+    # def set_s3_openai_api_key(context: BoltContext, next_):
+    #     try:
+    #         s3_response = s3_client.get_object(
+    #             Bucket=openai_bucket_name, Key=context.team_id
+    #         )
+    #         config_str: str = s3_response["Body"].read().decode("utf-8")
+    #         if config_str.startswith("{"):
+    #             config = json.loads(config_str)
+    #             context["OPENAI_MODEL"] = config.get("model")
+    #             context["OPENAI_TEMPERATURE"] = config.get(
+    #                 "temperature", DEFAULT_OPENAI_TEMPERATURE
+    #             )
+    #         else:
+    #             # The legacy data format
+    #             context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
+    #             context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
+    #         context["OPENAI_API_TYPE"] = DEFAULT_OPENAI_API_TYPE
+    #         context["OPENAI_API_VERSION"] = DEFAULT_OPENAI_API_VERSION
+    #         context["OPENAI_DEPLOYMENT_ID"] = DEFAULT_OPENAI_DEPLOYMENT_ID
+    #     except:  # noqa: E722
+    #         context["OPENAI_API_KEY"] = None
+    #     next_()
 
     @app.event("app_home_opened")
     def render_home_tab(client: WebClient, context: BoltContext):
@@ -177,12 +175,11 @@ def handler(event, context_):
         except:  # noqa: E722
             pass
 
-        openai_api_key = context.get("OPENAI_API_KEY")
+        # openai_api_key = context.get("OPENAI_API_KEY")
         message = translate(
-            openai_api_key=openai_api_key, context=context, text=message
+            context=context, text=message
         )
         configure_label = translate(
-            openai_api_key=openai_api_key,
             context=context,
             text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
         )
@@ -195,20 +192,20 @@ def handler(event, context_):
     @app.action("configure")
     def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext):
         ack()
-        already_set_api_key = context.get("OPENAI_API_KEY")
+        # already_set_api_key = context.get("OPENAI_API_KEY")
         api_key_text = "Save your OpenAI API key:"
         submit = "Submit"
         cancel = "Cancel"
-        if already_set_api_key is not None:
-            api_key_text = translate(
-                openai_api_key=already_set_api_key, context=context, text=api_key_text
-            )
-            submit = translate(
-                openai_api_key=already_set_api_key, context=context, text=submit
-            )
-            cancel = translate(
-                openai_api_key=already_set_api_key, context=context, text=cancel
-            )
+        # if already_set_api_key is not None:
+        #     api_key_text = translate(
+        #         openai_api_key=already_set_api_key, context=context, text=api_key_text
+        #     )
+        #     submit = translate(
+        #         openai_api_key=already_set_api_key, context=context, text=submit
+        #     )
+        #     cancel = translate(
+        #         openai_api_key=already_set_api_key, context=context, text=cancel
+        #     )
 
         client.views_open(
             trigger_id=body["trigger_id"],
@@ -258,40 +255,6 @@ def handler(event, context_):
             },
         )
 
-    def validate_api_key_registration(ack: Ack, view: dict, context: BoltContext):
-        already_set_api_key = context.get("OPENAI_API_KEY")
-
-        inputs = view["state"]["values"]
-        api_key = inputs["api_key"]["input"]["value"]
-        model = inputs["model"]["input"]["selected_option"]["value"]
-        try:
-            # Verify if the API key is valid
-            openai.Model.retrieve(api_key=api_key, id="gpt-3.5-turbo")
-            try:
-                # Verify if the given model works with the API key
-                openai.Model.retrieve(api_key=api_key, id=model)
-            except Exception:
-                text = "This model is not yet available for this API key"
-                if already_set_api_key is not None:
-                    text = translate(
-                        openai_api_key=already_set_api_key, context=context, text=text
-                    )
-                ack(
-                    response_action="errors",
-                    errors={"model": text},
-                )
-                return
-            ack()
-        except Exception:
-            text = "This API key seems to be invalid"
-            if already_set_api_key is not None:
-                text = translate(
-                    openai_api_key=already_set_api_key, context=context, text=text
-                )
-            ack(
-                response_action="errors",
-                errors={"api_key": text},
-            )
 
     def save_api_key_registration(
         view: dict,

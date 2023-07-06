@@ -6,11 +6,14 @@ from slack_bolt import App, Ack, BoltContext, BoltResponse
 from slack_bolt.request.payload_utils import is_event
 from slack_sdk.web import WebClient
 from app.utils import log, feedback
+import os
 
 from app.env import (
     OPENAI_TIMEOUT_SECONDS,
     SYSTEM_TEXT,
     TRANSLATE_MARKDOWN,
+    OPENAI_MODEL,
+    OPENAI_TEMPERATURE
 )
 from app.i18n import translate
 from app.openai_ops import (
@@ -33,6 +36,8 @@ from app.utils import redact_string
 # Listener functions
 #
 
+queue=0
+incr=0 
 
 def just_ack(ack: Ack):
     ack()
@@ -61,20 +66,11 @@ def respond_to_app_mention(
                 return
 
     wip_reply = None
+
     # Replace placeholder for Slack user ID in the system prompt
     system_text = build_system_text(SYSTEM_TEXT, TRANSLATE_MARKDOWN, context)
     messages = [{"role": "system", "content": system_text}]
-
-    openai_api_key = context.get("OPENAI_API_KEY")
-    openai_api_base = context.get("OPENAI_API_BASE")
     try:
-        if openai_api_base is None:
-            client.chat_postMessage(
-                channel=context.channel_id,
-                text="To use this app, please configure your API base.",
-
-            )
-            return
 
         user_id = context.actor_user_id or context.user_id
 
@@ -116,7 +112,7 @@ def respond_to_app_mention(
             )
         
         loading_text = translate(
-            openai_api_key=openai_api_key, context=context, text=DEFAULT_LOADING_TEXT
+             context=context, text=DEFAULT_LOADING_TEXT
         )
         wip_reply = post_wip_message(
             client=client,
@@ -131,7 +127,7 @@ def respond_to_app_mention(
             messages,
             num_context_tokens,
             max_context_tokens,
-        ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
+        ) = messages_within_context_window(messages, model=OPENAI_MODEL)
         num_messages = len([msg for msg in messages if msg.get("role") != "system"])
         if num_messages == 0:
             update_wip_message(
@@ -143,19 +139,19 @@ def respond_to_app_mention(
                 user=context.user_id,
             )
         else:
+            global queue
+            global incr
+            currentqueue=queue
+            queue+=1
+            while(currentqueue!=incr):
+                
+                pass
             stream = start_receiving_openai_response(
-                openai_api_key=openai_api_key,
-                model=context["OPENAI_MODEL"],
-                temperature=context["OPENAI_TEMPERATURE"],
+                model=OPENAI_MODEL,
+                temperature=OPENAI_TEMPERATURE,
                 messages=messages,
                 user=context.user_id,
-                openai_api_type=context["OPENAI_API_TYPE"],
-                openai_api_base=context["OPENAI_API_BASE"],
-                openai_api_version=context["OPENAI_API_VERSION"],
-                openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
             )
-            print("payload")
-            print(payload)
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,
@@ -178,7 +174,6 @@ def respond_to_app_mention(
                 )
                 + "\n\n"
                 + translate(
-                    openai_api_key=openai_api_key,
                     context=context,
                     text=TIMEOUT_ERROR_MESSAGE,
                 )
@@ -199,7 +194,6 @@ def respond_to_app_mention(
             )
             + "\n\n"
             + translate(
-                openai_api_key=openai_api_key,
                 context=context,
                 text=f":warning: An error occurred: {e}",
             )
@@ -213,8 +207,7 @@ def respond_to_app_mention(
             )
         prompt=messages[len(messages)-1]["content"]
         response=text
-    print("look here:")
-    print(messages)
+    incr+=1
     log(ts=payload["ts"],thread=payload["ts"],prompt=prompt,response=response)
 
 def respond_to_new_message(
@@ -228,6 +221,7 @@ def respond_to_new_message(
         return
 
     wip_reply = None
+    
     try:
         is_in_dm_with_bot = payload.get("channel_type") == "im"
         is_no_mention_required = False
@@ -235,9 +229,7 @@ def respond_to_new_message(
         if is_in_dm_with_bot is False and thread_ts is None:
             return
 
-        openai_api_key = context.get("OPENAI_API_KEY")
-        if openai_api_key is None:
-            return
+       
 
         messages_in_context = []
         if is_in_dm_with_bot is True and thread_ts is None:
@@ -342,7 +334,7 @@ def respond_to_new_message(
             )
 
         loading_text = translate(
-            openai_api_key=openai_api_key, context=context, text=DEFAULT_LOADING_TEXT
+            context=context, text=DEFAULT_LOADING_TEXT
         )
         wip_reply = post_wip_message(
             client=client,
@@ -357,7 +349,7 @@ def respond_to_new_message(
             messages,
             num_context_tokens,
             max_context_tokens,
-        ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
+        ) = messages_within_context_window(messages, model=OPENAI_MODEL)
         num_messages = len([msg for msg in messages if msg.get("role") != "system"])
         if num_messages == 0:
             update_wip_message(
@@ -369,16 +361,19 @@ def respond_to_new_message(
                 user=context.user_id,
             )
         else:
+
+            global queue
+            global incr
+            currentqueue=queue
+            queue+=1
+            while(currentqueue!=incr):
+                
+                pass
             stream = start_receiving_openai_response(
-                openai_api_key=openai_api_key,
-                model=context["OPENAI_MODEL"],
-                temperature=context["OPENAI_TEMPERATURE"],
+                model=OPENAI_MODEL,
+                temperature=OPENAI_TEMPERATURE,
                 messages=messages,
                 user=user_id,
-                openai_api_type=context["OPENAI_API_TYPE"],
-                openai_api_base=context["OPENAI_API_BASE"],
-                openai_api_version=context["OPENAI_API_VERSION"],
-                openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
             )
 
             latest_replies = client.conversations_replies(
@@ -397,8 +392,7 @@ def respond_to_new_message(
                     ts=wip_reply["message"]["ts"],
                 )
                 return
-            print("payload")
-            print(payload)
+
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,
@@ -421,7 +415,6 @@ def respond_to_new_message(
                 )
                 + "\n\n"
                 + translate(
-                    openai_api_key=openai_api_key,
                     context=context,
                     text=TIMEOUT_ERROR_MESSAGE,
                 )
@@ -456,6 +449,7 @@ def respond_to_new_message(
         realThread=thread_ts
     else:
         realThread=context.channel_id
+    incr+=1
     log(ts=payload["ts"],thread=realThread,prompt=prompt,response=response)
 
 

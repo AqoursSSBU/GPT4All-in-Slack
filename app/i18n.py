@@ -32,7 +32,7 @@ def from_locale_to_lang(locale: Optional[str]) -> Optional[str]:
 _translation_result_cache = {}
 
 
-def translate(*, openai_api_key: str, context: BoltContext, text: str) -> str:
+def translate(*, context: BoltContext, text: str) -> str:
     lang = from_locale_to_lang(context.get("locale"))
     if lang is None or lang == "English":
         return text
@@ -41,7 +41,6 @@ def translate(*, openai_api_key: str, context: BoltContext, text: str) -> str:
     if cached_result is not None:
         return cached_result
     response = openai.ChatCompletion.create(
-        api_key=openai_api_key,
         model=GPT_3_5_TURBO_0301_MODEL,
         messages=[
             {
@@ -69,7 +68,6 @@ def translate(*, openai_api_key: str, context: BoltContext, text: str) -> str:
         frequency_penalty=0,
         logit_bias={},
         user="system",
-        api_base=context.get("OPENAI_API_BASE"),
         api_type=context.get("OPENAI_API_TYPE"),
         api_version=context.get("OPENAI_API_VERSION"),
         deployment_id=context.get("OPENAI_DEPLOYMENT_ID"),

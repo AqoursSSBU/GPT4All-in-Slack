@@ -14,6 +14,7 @@ from slack_sdk.web import WebClient
 from app.markdown import slack_to_markdown, markdown_to_slack
 from app.slack_ops import update_wip_message
 from app.utils import log
+from gpt4all import GPT4All
 
 
 # ----------------------------
@@ -33,11 +34,14 @@ GPT_4_32K_MODEL = "gpt-4-32k"
 GPT_4_32K_0314_MODEL = "gpt-4-32k-0314"
 GPT_4_32K_0613_MODEL = "gpt-4-32k-0613"
 
+from app.env import (
+    OPENAI_MODEL
+)
 
 # Format message from Slack to send to OpenAI
 def format_openai_message_content(content: str, translate_markdown: bool) -> str:
     if content is None:
-        return None
+        return ""
 
     # Unescape &, < and >, since Slack replaces these with their HTML equivalents
     # See also: https://api.slack.com/reference/surfaces/formatting#escaping
@@ -72,32 +76,37 @@ def messages_within_context_window(
     #         break
     return messages, 0, 0
 
-
+GPTmodel = GPT4All(model_name=OPENAI_MODEL)
 
 def start_receiving_openai_response(
     *,
-    openai_api_key: str,
     model: str,
     temperature: float,
     messages: List[Dict[str, str]],
     user: str,
-    openai_api_type: str,
-    openai_api_base: str,
-    openai_api_version: str,
-    openai_deployment_id: str,
-) -> Generator[OpenAIObject, Any, None]:
-    openai.api_base = openai_api_base
-    return openai.ChatCompletion.create(
-        api_key=openai_api_key,
-        model=model,
-        messages=messages,
-        top_p=1,
-        n=1,
-        max_tokens=MAX_TOKENS,  
-        temperature=temperature,
-        echo=True,
-        stream=False
-    )
+):
+    global GPTmodel
+    chatsession=[]
+
+    with GPTmodel.chat_session():
+        for message in messages[:-1]:
+            GPTmodel.current_chat_session.append(message)
+        token = GPTmodel.generate(prompt=messages[-1]['content'],max_tokens=2048)
+        for message in GPTmodel.current_chat_session:
+            chatsession.append(message)
+        
+    return chatsession
+    # return openai.ChatCompletion.create(
+    #     api_key=openai_api_key,
+    #     model=model,
+    #     messages=messages,
+    #     top_p=1,
+    #     n=1,
+    #     max_tokens=MAX_TOKENS,  
+    #     temperature=temperature,
+    #     echo=True,
+    #     stream=False
+    # )
 
 
 def consume_openai_stream_to_write_reply(
@@ -107,7 +116,7 @@ def consume_openai_stream_to_write_reply(
     context: BoltContext,
     user_id: str,
     messages: List[Dict[str, str]],
-    stream: Generator[OpenAIObject, Any, None],
+    stream: List,
     timeout_seconds: int,
     translate_markdown: bool,
 ):
@@ -118,43 +127,36 @@ def consume_openai_stream_to_write_reply(
     threads = []
     try:
         loading_character = " ... :writing_hand:"
-        for item in stream["choices"]:
-            spent_seconds = time.time() - start_time
-            if timeout_seconds < spent_seconds:
-                raise Timeout()
-            
-            if item.get("finish_reason") != "stop":
-                break
-            delta = item.get("message").get("content")
-            
-            for message in messages:
-                if len(message["content"])>0:
-                    delta=delta[len(message["content"])+1:]
-                delta=delta.lstrip('\n')
-            if delta is not None:
-                word_count += 1
-                assistant_reply["content"] += delta
-                if word_count >= 20:
-                    def update_message():
-                        assistant_reply_text = format_assistant_reply(
-                            assistant_reply["content"], translate_markdown
-                        )
-                        wip_reply["message"]["text"] = assistant_reply_text
-                        update_wip_message(
-                            client=client,
-                            channel=context.channel_id,
-                            ts=wip_reply["message"]["ts"],
-                            text=assistant_reply_text + loading_character,
-                            messages=messages,
-                            user=user_id,
-                        )
-                        
+        
+        spent_seconds = time.time() - start_time
+        if timeout_seconds < spent_seconds:
+            raise Timeout()
 
-                    thread = threading.Thread(target=update_message)
-                    thread.daemon = True
-                    thread.start()
-                    threads.append(thread)
-                    word_count = 0
+        delta = stream[-1]["content"]
+        if delta is not None:
+            word_count += 1
+            assistant_reply["content"] += delta
+            if word_count >= 20:
+                def update_message():
+                    assistant_reply_text = format_assistant_reply(
+                        assistant_reply["content"], translate_markdown
+                    )
+                    wip_reply["message"]["text"] = assistant_reply_text
+                    update_wip_message(
+                        client=client,
+                        channel=context.channel_id,
+                        ts=wip_reply["message"]["ts"],
+                        text=assistant_reply_text + loading_character,
+                        messages=messages,
+                        user=user_id,
+                    )
+                    
+
+                thread = threading.Thread(target=update_message)
+                thread.daemon = True
+                thread.start()
+                threads.append(thread)
+                word_count = 0
 
         for t in threads:
             try:
@@ -174,8 +176,6 @@ def consume_openai_stream_to_write_reply(
             messages=messages,
             user=user_id,
         )
-        print("here")
-        print(stream)
     finally:
         for t in threads:
             try:

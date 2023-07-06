@@ -40,8 +40,6 @@ ngrok http 4891
 export SLACK_APP_TOKEN=xapp-1-...
 # Install the app into your workspace to grab this token
 export SLACK_BOT_TOKEN=xoxb-...
-# Find URL from ngrok console
-export OPENAI_API_BASE=https://...
 
 # Optional: default model is vicuna-7b-1.1-q4_2
 export OPENAI_MODEL=vicuna-13b-1.1-q4_2
@@ -90,8 +88,6 @@ export REDACTION_ENABLED=true
 # To use Azure OpenAI, set the following optional environment variables according to your environment
 # default: None
 export OPENAI_API_TYPE=azure
-# default: https://api.openai.com/v1
-export OPENAI_API_BASE=https://YOUR_RESOURCE_NAME.openai.azure.com
 # default: None
 export OPENAI_API_VERSION=2023-05-15
 # default: None

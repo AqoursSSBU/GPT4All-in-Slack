@@ -121,7 +121,6 @@ def feedback(ts: str, mood: str):
     query = "SELECT * FROM GPTlog WHERE ts = %s"
     cursor.execute(query, (ts_to_match,))
     result = cursor.fetchall()
-    print(result)
-    print(values)
+
     db.disconnect()
     return
