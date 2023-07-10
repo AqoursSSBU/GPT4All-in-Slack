@@ -24,16 +24,12 @@ from app.env import (
     SLACK_APP_LOG_LEVEL,
     DEFAULT_OPENAI_MODEL,
     DEFAULT_OPENAI_TEMPERATURE,
-    DEFAULT_OPENAI_API_TYPE,
-    DEFAULT_OPENAI_API_VERSION,
-    DEFAULT_OPENAI_DEPLOYMENT_ID,
 )
 from app.slack_ops import (
     build_home_tab,
     DEFAULT_HOME_TAB_MESSAGE,
     DEFAULT_HOME_TAB_CONFIGURE_LABEL,
 )
-from app.i18n import translate
 
 #
 # Product deployment (AWS Lambda)
@@ -176,13 +172,13 @@ def handler(event, context_):
             pass
 
         # openai_api_key = context.get("OPENAI_API_KEY")
-        message = translate(
-            context=context, text=message
-        )
-        configure_label = translate(
-            context=context,
-            text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
-        )
+        # message = translate(
+        #     context=context, text=message
+        # )
+        # configure_label = translate(
+        #     context=context,
+        #     text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
+        # )
 
         client.views_publish(
             user_id=context.user_id,

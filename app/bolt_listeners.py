@@ -14,7 +14,7 @@ from app.env import (
     OPENAI_MODEL,
     OPENAI_TEMPERATURE
 )
-from app.i18n import translate
+# from app.i18n import translate
 from app.openai_ops import (
     start_receiving_openai_response,
     format_openai_message_content,
@@ -107,9 +107,10 @@ def respond_to_app_mention(
                 }
             )
         
-        loading_text = translate(
-             context=context, text=DEFAULT_LOADING_TEXT
-        )
+        # loading_text = translate(
+        #      context=context, text=DEFAULT_LOADING_TEXT
+        # )
+        loading_text=DEFAULT_LOADING_TEXT
         wip_reply = post_wip_message(
             client=client,
             channel=context.channel_id,
@@ -170,10 +171,7 @@ def respond_to_app_mention(
                     else ""
                 )
                 + "\n\n"
-                + translate(
-                    context=context,
-                    text=TIMEOUT_ERROR_MESSAGE,
-                )
+                
             )
             client.chat_update(
                 channel=context.channel_id,
@@ -333,9 +331,7 @@ def respond_to_new_message(
                 }
             )
 
-        loading_text = translate(
-            context=context, text=DEFAULT_LOADING_TEXT
-        )
+        loading_text = DEFAULT_LOADING_TEXT
         wip_reply = post_wip_message(
             client=client,
             channel=context.channel_id,

@@ -15,7 +15,7 @@ from app.slack_ops import (
     DEFAULT_HOME_TAB_MESSAGE,
     DEFAULT_HOME_TAB_CONFIGURE_LABEL,
 )
-from app.i18n import translate
+# from app.i18n import translate
 
 
 if __name__ == "__main__":
@@ -36,16 +36,16 @@ if __name__ == "__main__":
     @app.event("app_home_opened")
     def render_home_tab(client: WebClient, context: BoltContext):
         
-        text = translate(
+        # text = translate(
             
-            context=context,
-            text=DEFAULT_HOME_TAB_MESSAGE,
-        )
-        configure_label = translate(
+        #     context=context,
+        #     text=DEFAULT_HOME_TAB_MESSAGE,
+        # )
+        # configure_label = translate(
             
-            context=context,
-            text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
-        )
+        #     context=context,
+        #     text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
+        # )
         client.views_publish(
             user_id=context.user_id,
             view=build_home_tab(text, configure_label),
