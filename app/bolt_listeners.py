@@ -56,6 +56,7 @@ def respond_to_app_mention(
     client: WebClient,
     logger: logging.Logger,
 ):
+    
     if payload.get("thread_ts") is not None:
         parent_message = find_parent_message(
             client, context.channel_id, payload.get("thread_ts")
@@ -144,14 +145,16 @@ def respond_to_app_mention(
             currentqueue=queue
             queue+=1
             while(currentqueue!=incr):
-                
+                print("at +"+str(incr)+" out of "+str(currentqueue))
                 pass
+            start=time.time()
             stream = start_receiving_openai_response(
                 model=OPENAI_MODEL,
                 temperature=OPENAI_TEMPERATURE,
                 messages=messages,
                 user=context.user_id,
             )
+            incr+=1
             consume_openai_stream_to_write_reply(
                 client=client,
                 wip_reply=wip_reply,
@@ -162,6 +165,7 @@ def respond_to_app_mention(
                 timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
             )
+            
             prompt=messages[len(messages)-2]["content"]
             response=messages[len(messages)-1]["content"]
     except Timeout:
@@ -207,10 +211,10 @@ def respond_to_app_mention(
             )
         prompt=messages[len(messages)-1]["content"]
         response=text
-    incr+=1
-    print("payload")
-    print(payload)
-    log(ts=payload["ts"],thread=payload["ts"],user=payload["user"],prompt=prompt,response=response)
+    
+    end=time.time()
+    
+    log(ts=payload["ts"],thread=payload["ts"],channel=context.channel_id,user=payload["user"],prompt=prompt,response=response, start=start,end=end)
 
 def respond_to_new_message(
     context: BoltContext,
@@ -218,6 +222,7 @@ def respond_to_new_message(
     client: WebClient,
     logger: logging.Logger,
 ):
+    
     if payload.get("bot_id") is not None and payload.get("bot_id") != context.bot_id:
         # Skip a new message by a different app
         return
@@ -280,7 +285,7 @@ def respond_to_new_message(
         indices_to_remove = []
         for idx, reply in enumerate(messages_in_context):
             maybe_event_type = reply.get("metadata", {}).get("event_type")
-            if maybe_event_type == "chat-gpt-convo":
+            if maybe_event_type == "gpt4all-convo":
                 if context.bot_id != reply.get("bot_id"):
                     # Remove messages by a different app
                     indices_to_remove.append(idx)
@@ -369,15 +374,16 @@ def respond_to_new_message(
             currentqueue=queue
             queue+=1
             while(currentqueue!=incr):
-                
+                print("at +"+str(incr)+" out of "+str(currentqueue))
                 pass
+            start=time.time()
             stream = start_receiving_openai_response(
                 model=OPENAI_MODEL,
                 temperature=OPENAI_TEMPERATURE,
                 messages=messages,
                 user=user_id,
             )
-
+            incr+=1
             latest_replies = client.conversations_replies(
                 channel=context.channel_id,
                 ts=wip_reply.get("ts"),
@@ -405,6 +411,7 @@ def respond_to_new_message(
                 timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
             )
+            
             prompt=messages[len(messages)-2]["content"]
             response=messages[len(messages)-1]["content"]
     except Timeout:
@@ -426,6 +433,7 @@ def respond_to_new_message(
                 ts=wip_reply["message"]["ts"],
                 text=text,
             )
+            
             prompt=messages[len(messages)-1]["content"]
             response=text
     except Exception as e:
@@ -445,16 +453,16 @@ def respond_to_new_message(
                 ts=wip_reply["message"]["ts"],
                 text=text,
             )
-        prompt=messages[len(messages)-1]["content"]
+        incr+=1
+        prompt=messages[len(messages)-2]["content"]
         response=text
     if(thread_ts is not None):
         realThread=thread_ts
     else:
         realThread=context.channel_id
-    incr+=1
-    print("payload")
-    print(payload)
-    log(ts=payload["ts"],thread=realThread,user=payload["user"],prompt=prompt,response=response)
+    
+    end=time.time()
+    log(ts=payload["ts"],thread=realThread,channel=context.channel_id,user=payload["user"],prompt=prompt,response=response,start=start,end=end)
 
 
 def react_feedback(  
@@ -469,6 +477,7 @@ def react_feedback(
         ts=payload.get("item").get("ts")
     )
     message = result["messages"][0]
+    
     if(client.auth_test().get("user_id")==payload.get("item_user") and DEFAULT_LOADING_TEXT!=message["text"]):
         if(payload.get("item").get("channel")[0]=="D"):
             # In DMs
@@ -480,7 +489,9 @@ def react_feedback(
             )
             feedback(
                 ts=final["messages"][-1]["ts"],
-                mood=payload.get("reaction")
+                mood=payload.get("reaction"),
+                channel=payload.get("item").get("channel"),
+                added=payload['type']=="reaction_added"
             )
         else:
             # In thread
@@ -500,7 +511,9 @@ def react_feedback(
             )
             feedback(
                 ts=final["messages"][-2]["ts"],
-                mood=payload.get("reaction")
+                mood=payload.get("reaction"),
+                channel=payload.get("item").get("channel"),
+                added=payload['type']=="reaction_added"
             )
        
     
@@ -509,6 +522,7 @@ def register_listeners(app: App):
     app.event("app_mention")(ack=just_ack, lazy=[respond_to_app_mention])
     app.event("message")(ack=just_ack, lazy=[respond_to_new_message])
     app.event("reaction_added")(ack=just_ack, lazy=[react_feedback])
+    app.event("reaction_removed")(ack=just_ack, lazy=[react_feedback])
     
 
 MESSAGE_SUBTYPES_TO_SKIP = ["message_changed", "message_deleted"]

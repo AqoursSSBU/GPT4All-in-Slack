@@ -13,7 +13,7 @@ from slack_sdk.web import WebClient
 
 from app.markdown import slack_to_markdown, markdown_to_slack
 from app.slack_ops import update_wip_message
-from app.utils import log
+from app.slack_ops import post_message
 from gpt4all import GPT4All
 
 
@@ -142,14 +142,24 @@ def consume_openai_stream_to_write_reply(
                         assistant_reply["content"], translate_markdown
                     )
                     wip_reply["message"]["text"] = assistant_reply_text
+                    split_string = [assistant_reply_text[i:i+4000] for i in range(0, len(assistant_reply_text), 4000)]
                     update_wip_message(
                         client=client,
                         channel=context.channel_id,
                         ts=wip_reply["message"]["ts"],
-                        text=assistant_reply_text + loading_character,
+                        text=split_string[0],
                         messages=messages,
                         user=user_id,
                     )
+                    for split in split_string[1:]:
+                        post_message(
+                            client=client,
+                            channel=context.channel_id,
+                            thread_ts=wip_reply["message"]["ts"],
+                            text=split,
+                            messages=messages,
+                            user=context.user_id,
+                        )
                     
 
                 thread = threading.Thread(target=update_message)
@@ -168,14 +178,24 @@ def consume_openai_stream_to_write_reply(
             assistant_reply["content"], translate_markdown
         )
         wip_reply["message"]["text"] = assistant_reply_text
+        split_string = [assistant_reply_text[i:i+4000] for i in range(0, len(assistant_reply_text), 4000)]
         update_wip_message(
             client=client,
             channel=context.channel_id,
             ts=wip_reply["message"]["ts"],
-            text=assistant_reply_text,
+            text=split_string[0],
             messages=messages,
             user=user_id,
         )
+        for split in split_string[1:]:
+            post_message(
+                client=client,
+                channel=context.channel_id,
+                thread_ts=wip_reply["message"]["ts"],
+                text=split,
+                messages=messages,
+                user=context.user_id,
+            )
     finally:
         for t in threads:
             try:
