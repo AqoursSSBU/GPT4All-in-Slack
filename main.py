@@ -9,11 +9,6 @@ from app.bolt_listeners import before_authorize, register_listeners
 from app.env import (
     USE_SLACK_LANGUAGE,
     SLACK_APP_LOG_LEVEL,
-    OPENAI_MODEL,
-    OPENAI_TEMPERATURE,
-    OPENAI_API_TYPE,
-    OPENAI_API_VERSION,
-    OPENAI_DEPLOYMENT_ID,
 )
 from app.slack_ops import (
     build_home_tab,

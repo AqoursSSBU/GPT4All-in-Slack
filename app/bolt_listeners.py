@@ -9,7 +9,6 @@ from app.utils import log, feedback
 import os
 
 from app.env import (
-    OPENAI_TIMEOUT_SECONDS,
     SYSTEM_TEXT,
     TRANSLATE_MARKDOWN,
     OPENAI_MODEL,
@@ -43,10 +42,6 @@ def just_ack(ack: Ack):
     ack()
 
 
-TIMEOUT_ERROR_MESSAGE = (
-    f":warning: Sorry! It looks like OpenAI didn't respond within {OPENAI_TIMEOUT_SECONDS} seconds. "
-    "Please try again later. :bow:"
-)
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
 
 
@@ -145,7 +140,6 @@ def respond_to_app_mention(
             currentqueue=queue
             queue+=1
             while(currentqueue!=incr):
-                print("at +"+str(incr)+" out of "+str(currentqueue))
                 pass
             start=time.time()
             stream = start_receiving_openai_response(
@@ -162,7 +156,6 @@ def respond_to_app_mention(
                 user_id=user_id,
                 messages=messages,
                 stream=stream,
-                timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
             )
             
@@ -374,7 +367,6 @@ def respond_to_new_message(
             currentqueue=queue
             queue+=1
             while(currentqueue!=incr):
-                print("at +"+str(incr)+" out of "+str(currentqueue))
                 pass
             start=time.time()
             stream = start_receiving_openai_response(
@@ -408,7 +400,6 @@ def respond_to_new_message(
                 user_id=user_id,
                 messages=messages,
                 stream=stream,
-                timeout_seconds=OPENAI_TIMEOUT_SECONDS,
                 translate_markdown=TRANSLATE_MARKDOWN,
             )
             

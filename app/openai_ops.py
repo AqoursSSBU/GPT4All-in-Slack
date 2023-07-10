@@ -91,7 +91,7 @@ def start_receiving_openai_response(
     with GPTmodel.chat_session():
         for message in messages[:-1]:
             GPTmodel.current_chat_session.append(message)
-        token = GPTmodel.generate(prompt=messages[-1]['content'],max_tokens=2048)
+        token = GPTmodel.generate(prompt=messages[-1]['content'],max_tokens=2048,temp=temperature)
         for message in GPTmodel.current_chat_session:
             chatsession.append(message)
         
@@ -117,7 +117,6 @@ def consume_openai_stream_to_write_reply(
     user_id: str,
     messages: List[Dict[str, str]],
     stream: List,
-    timeout_seconds: int,
     translate_markdown: bool,
 ):
     start_time = time.time()
@@ -129,8 +128,6 @@ def consume_openai_stream_to_write_reply(
         loading_character = " ... :writing_hand:"
         
         spent_seconds = time.time() - start_time
-        if timeout_seconds < spent_seconds:
-            raise Timeout()
 
         delta = stream[-1]["content"]
         if delta is not None:

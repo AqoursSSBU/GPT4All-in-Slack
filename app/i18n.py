@@ -68,7 +68,6 @@ def translate(*, context: BoltContext, text: str) -> str:
         frequency_penalty=0,
         logit_bias={},
         user="system",
-        api_type=context.get("OPENAI_API_TYPE"),
         api_version=context.get("OPENAI_API_VERSION"),
         deployment_id=context.get("OPENAI_DEPLOYMENT_ID"),
     )
