@@ -140,6 +140,8 @@ def consume_openai_stream_to_write_reply(
                     )
                     wip_reply["message"]["text"] = assistant_reply_text
                     split_string = [assistant_reply_text[i:i+4000] for i in range(0, len(assistant_reply_text), 4000)]
+                    if len(split_string) == 0:
+                        split_string.append(" ")
                     update_wip_message(
                         client=client,
                         channel=context.channel_id,
@@ -176,6 +178,9 @@ def consume_openai_stream_to_write_reply(
         )
         wip_reply["message"]["text"] = assistant_reply_text
         split_string = [assistant_reply_text[i:i+4000] for i in range(0, len(assistant_reply_text), 4000)]
+        print("here")
+        print(split_string)
+
         update_wip_message(
             client=client,
             channel=context.channel_id,

@@ -48,7 +48,7 @@ if __name__ == "__main__":
         # )
         client.views_publish(
             user_id=context.user_id,
-            view=build_home_tab(text, configure_label),
+            view=build_home_tab(DEFAULT_HOME_TAB_MESSAGE, DEFAULT_HOME_TAB_CONFIGURE_LABEL),
         )
 
     if USE_SLACK_LANGUAGE is True:
