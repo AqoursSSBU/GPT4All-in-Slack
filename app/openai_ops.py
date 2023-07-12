@@ -80,10 +80,8 @@ GPTmodel = GPT4All(model_name=OPENAI_MODEL)
 
 def start_receiving_openai_response(
     *,
-    model: str,
     temperature: float,
     messages: List[Dict[str, str]],
-    user: str,
 ):
     global GPTmodel
     chatsession=[]

@@ -144,10 +144,10 @@ def respond_to_app_mention(
                 pass
             start=time.time()
             stream = start_receiving_openai_response(
-                model=OPENAI_MODEL,
+               
                 temperature=OPENAI_TEMPERATURE,
                 messages=messages,
-                user=context.user_id,
+                
             )
             incr+=1
             consume_openai_stream_to_write_reply(
@@ -188,10 +188,7 @@ def respond_to_app_mention(
                 else ""
             )
             + "\n\n"
-            + translate(
-                context=context,
-                text=f":warning: An error occurred: {e}",
-            )
+            + f":warning: An error occurred: {e}"
         )
         logger.exception(text, e)
         if wip_reply is not None:
@@ -366,10 +363,10 @@ def respond_to_new_message(
                 pass
             start=time.time()
             stream = start_receiving_openai_response(
-                model=OPENAI_MODEL,
+               
                 temperature=OPENAI_TEMPERATURE,
                 messages=messages,
-                user=user_id,
+               
             )
             incr+=1
             latest_replies = client.conversations_replies(
@@ -401,28 +398,6 @@ def respond_to_new_message(
             
             prompt=messages[len(messages)-2]["content"]
             response=messages[len(messages)-1]["content"]
-    except Timeout:
-        if wip_reply is not None:
-            text = (
-                (
-                    wip_reply.get("message", {}).get("text", "")
-                    if wip_reply is not None
-                    else ""
-                )
-                + "\n\n"
-                + translate(
-                    context=context,
-                    text=TIMEOUT_ERROR_MESSAGE,
-                )
-            )
-            client.chat_update(
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
-                text=text,
-            )
-            
-            prompt=messages[len(messages)-1]["content"]
-            response=text
     except Exception as e:
         text = (
             (

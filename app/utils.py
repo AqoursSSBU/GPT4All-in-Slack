@@ -47,10 +47,9 @@ def log(ts: str, prompt: str, response: str, thread: str, user: str, channel: st
     # file.close()
     mydb = mysql.connector.connect(
         host="localhost",
-        user="root",
-        password="password",
+        user="root"
     )
-    
+    print("connected")
     cursor = mydb.cursor()
     sql="CREATE DATABASE IF NOT EXISTS db"
     cursor.execute(sql)
@@ -59,7 +58,6 @@ def log(ts: str, prompt: str, response: str, thread: str, user: str, channel: st
     db = mysql.connector.connect(
         host="localhost",
         user="root",
-        password="password",
         database="db"
     )
     cursor=db.cursor()

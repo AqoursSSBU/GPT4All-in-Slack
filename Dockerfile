@@ -1,6 +1,6 @@
 FROM ubuntu:jammy as builder
 RUN apt-get update
-RUN apt-get install -y liblzma-dev git cmake build-essential python3 python3-pip
+RUN apt-get install -y liblzma-dev git cmake build-essential python3 python3-pip mysql-server
 WORKDIR /tmp
 RUN git clone --recurse-submodules https://github.com/nomic-ai/gpt4all 
 WORKDIR /tmp/gpt4all/gpt4all-backend/
@@ -24,7 +24,8 @@ COPY app/*.py /app/app/
 COPY *.bin /root/.cache/gpt4all/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 COPY --from=builder /usr/local/lib/ /usr/local/lib/
-ENTRYPOINT python3 main.py
+COPY commands.sh /app/
+ENTRYPOINT ["sh","/app/commands.sh"]
 
 # docker buildx build . --platform linux/amd64 -t gpt4all-slack
 # export SLACK_APP_TOKEN=xapp-...
